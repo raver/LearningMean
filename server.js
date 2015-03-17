@@ -3,12 +3,13 @@ var app = express();
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
 var User = require('./app/models/user');
+var jwt = require('jsonwebtoken');
 var mongoose = require('mongoose');
 
 mongoose.connect('localhost:27017/myDatabase');
 
 
-
+var superSecret = 'ilovescotchscotchyscotchscotch';
 
 var port = process.env.PORT || 8080;
 
@@ -31,10 +32,76 @@ app.get('/', function (req, res) {
 var apiRouter = express.Router();
 
 
+apiRouter.post('/authenticate', function (req, res) {
+    User.findOne({
+        username: req.body.username
+    }).select('name username password').exec( function (err, user) {
+        if (err) throw err;
+
+        if (!user) {
+            res.json({
+                success: false,
+                message: 'Authentication failed. User not found.'
+            });
+        } else if (user) {
+
+            var validPassword = user.comparePassword( req.body.password ) ;
+            if (!validPassword) {
+                res.json({
+                    success: false,
+                    message: 'Authentication failed. Wrong password.'
+                });
+            } else {
+                var token = jwt.sign({
+                    name: user.name,
+                    username: user.username
+                }, superSecret, {
+                    expiresInMinutes: 1440
+                });
+
+                res.json({
+                    success: true,
+                    message: 'Enjoy your token!',
+                    token: token
+                });
+
+            
+            }
+        }
+
+
+    });
+});
+
+
 apiRouter.use(function(req, res, next) {
-    console.log('Somebody just came to our app!');
+    var token = req.body.token || req.param('token') || req.headers['x-access-token'];
+
+    if (token) {
+
+        jwt.verify(token, superSecret, function (err, decoded) {
+            if (err) {
+                return res.status(403).send({
+                    success: false,
+                    message: 'Failed to authenticate token.'
+                });
+
+            } else {
+                req.decoded = decoded;
+                next();
+            }
+
+        });
+    } else {
+        return res.status(403).send({
+            success: false,
+            message: 'No token provided.'
+        });
+    }
+
+    //console.log('Somebody just came to our app!');
     // we will add more to the middle wire
-    next();
+    //next();
 });
 
 apiRouter.get('/', function (req, res) {
@@ -43,33 +110,33 @@ apiRouter.get('/', function (req, res) {
 
 
 apiRouter.route('/users')
-    .post( function (req, res) {
-        var user = new User();
-        user.name = req.body.name;
-        user.username = req.body.username;
-        user.password = req.body.password;
+.post( function (req, res) {
+    var user = new User();
+    user.name = req.body.name;
+    user.username = req.body.username;
+    user.password = req.body.password;
 
-        user.save( function (err) {
-            if (err) {
-                if (err.code == 11000)
-                    return res.json({success: false, message: 'A user with that username already exists. '});
-                else 
-                    return res.send(err);
-            }
+    user.save( function (err) {
+        if (err) {
+            if (err.code == 11000)
+                return res.json({success: false, message: 'A user with that username already exists. '});
+            else 
+                return res.send(err);
+        }
 
-            res.json({message: 'User created!'});
-        });
-    })
-    .get( function (req, res) {
-        User.find( function(err, users) {
-            if (err) res.send(err);
-
-            res.json(users);
-            
-        });
-        
-        
+        res.json({message: 'User created!'});
     });
+})
+.get( function (req, res) {
+    User.find( function(err, users) {
+        if (err) res.send(err);
+
+        res.json(users);
+
+    });
+
+
+});
 
 
 apiRouter.route('/users/:user_id')
@@ -107,6 +174,11 @@ apiRouter.route('/users/:user_id')
         });
         
     });
+
+apiRouter.get('/me', function (req, res) {
+    res.send(req.decoded);
+    
+});
 
 
 app.use('/api', apiRouter);
