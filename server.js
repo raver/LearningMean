@@ -24,6 +24,7 @@ mongoose.connect(config.database);
 
 
 app.use(express.static(__dirname + '/public'));
+app.use(express.static(__dirname + '/bower_components'));
 
 var apiRouter = require('./app/routes/api')(app, express);
 
