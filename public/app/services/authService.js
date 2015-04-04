@@ -29,7 +29,7 @@ angular.module('authService', [])
             return false;
     };
     // get the user info
-    authFactory.getUser = function () {
+    authFactory.getUser = function() {
         if (AuthToken.getToken()) 
             return $http.get('/api/me', {cache: true });
         else
@@ -58,7 +58,7 @@ angular.module('authService', [])
             $window.localStorage.removeItem('token');
     };
 
-    return AuthTokenFactory;
+    return authTokenFactory;
 })
 .factory('AuthInterceptor', function ($q, AuthToken) {
     var interceptorFactory = {};

@@ -1,5 +1,13 @@
-o
+<div class="jumbotron text-center">
+	<h1>Welcome to the User CRM!</h1>
 
-gregreg
+	<div ng-if="!main.loggedIn">
+		<p>Login to see manage your users.</p>
+		<a href="/login" class="btn btn-primary">Login</a>
+	</div>
 
-Home.html
+	<div ng-if="main.loggedIn">
+		<p>Manage your users.</p>
+		<a href="/users" class="btn btn-primary">View Users</a>
+	</div>
+</div>
