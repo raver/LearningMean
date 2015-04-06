@@ -11,7 +11,7 @@ angular.module('userService', [])
     userFactory.create = function (userData) {
         return $http.post('/api/users/' ,userData);
     };
-    userFactory.update = function (id) {
+    userFactory.update = function (id, userData) {
         return $http.put('/api/users/' + id, userData);
     };
     userFactory.delete = function (id) {

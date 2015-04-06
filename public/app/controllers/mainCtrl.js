@@ -7,16 +7,24 @@ angular.module('mainCtrl', [])
         vm.loggedIn = Auth.isLoggedIn();
         
         Auth.getUser().then(function(data) {
-                vm.user = data;
+                vm.user = data.data;
             });
-        vm.loggedIn = false;
     });
 
 
     vm.doLogin = function () {
-        Auth.login( vm.loginData.username, vm.loginData,password)
+        vm.processing = true;
+        vm.error = '';
+        Auth.login( vm.loginData.username, vm.loginData.password)
             .success( function(data) {
-                $location.path('/users');
+                vm.processing = false;
+                if (data.success) {
+                    $location.path('/users');
+                } else {
+                    vm.error = data.message;
+                }
+
+
             });
 
         
